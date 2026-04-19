@@ -30,6 +30,12 @@ private slots:
 
     void on_pushButton_skill1_clicked();
 
+    void on_pushButton_skill2_clicked();
+
+    void on_pushButton_skill3_clicked();
+
+    void on_pushButton_back_clicked();
+
 private:
     Ui::MainWindow *ui;
     int playerHp;

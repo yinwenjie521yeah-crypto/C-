@@ -1,6 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 #include <QMessageBox>
+#include <QRandomGenerator>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -18,6 +19,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_skill1->hide();
     ui->pushButton_skill2->hide();
     ui->pushButton_skill3->hide();
+    ui->pushButton_back->hide();
 }
 
 MainWindow::~MainWindow()
@@ -47,6 +49,7 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::on_pushButton_3_clicked()
 {
     ui->label->setText("战斗中");
+    ui->pushButton_back->show();
 
     // 隐藏角色选择按钮
     ui->pushButton_3->hide();
@@ -87,6 +90,7 @@ void MainWindow::on_pushButton_3_clicked()
 void MainWindow::on_pushButton_4_clicked()
 {
     ui->label->setText("战斗中");
+    ui->pushButton_back->show();
 
     // 隐藏角色选择按钮
     ui->pushButton_3->hide();
@@ -134,28 +138,80 @@ void MainWindow::on_pushButton_5_clicked()
 }
 void MainWindow::enemyAttack()
 {
-    int damage;
+    int skill=QRandomGenerator::global()->bounded(1,4);
+    if(isPlayerZhang){//玩家是张楚岚，对手是冯宝宝
+        if(skill==1){
+            int damage=18;
+            ui->textEdit_log->append("冯宝宝使用了菜刀斩");
+                playerHp-=damage;
+            if(playerHp<0){
+                playerHp=0;
+            }
+            ui->textEdit_log->append("你受到了"+QString::number(damage)+"点伤害");
+        }
+        else if (skill == 2)
+        {
+            int heal = 20;
+            ui->textEdit_log->append("冯宝宝使用了 回血！");
+            enemyHp += heal;
 
-    if (isPlayerZhang)
-    {
-        // 说明敌人是冯宝宝
-        damage = 18;
-        ui->textEdit_log->append("冯宝宝使用了 菜刀斩！");
+            if (enemyHp > 100)
+                enemyHp = 100;
+
+            ui->textEdit_log->append("冯宝宝恢复了 " + QString::number(heal) + " 点生命！");
+        }
+        else
+        {
+            int damage = 38;
+            ui->textEdit_log->append("冯宝宝使用了 认真一刀！");
+            playerHp -= damage;
+
+            if (playerHp < 0)
+                playerHp = 0;
+
+            ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
+        }
     }
     else
     {
-        // 说明敌人是张楚岚
-        damage = 20;
-        ui->textEdit_log->append("张楚岚使用了 掌心雷！");
+        // 玩家是冯宝宝，敌人就是张楚岚
+        if (skill == 1)
+        {
+            int damage = 20;
+            ui->textEdit_log->append("张楚岚使用了 掌心雷！");
+            playerHp -= damage;
+
+            if (playerHp < 0)
+                playerHp = 0;
+
+            ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
+        }
+        else if (skill == 2)
+        {
+            int damage = 30;
+            ui->textEdit_log->append("张楚岚使用了 阳五雷！");
+            playerHp -= damage;
+
+            if (playerHp < 0)
+                playerHp = 0;
+
+            ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
+        }
+        else
+        {
+            int damage = QRandomGenerator::global()->bounded(15, 31);
+            ui->textEdit_log->append("张楚岚使用了 迅雷！");
+            playerHp -= damage;
+
+            if (playerHp < 0)
+                playerHp = 0;
+
+            ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
+        }
     }
 
-    playerHp -= damage;
-
-    if (playerHp < 0)
-        playerHp = 0;
-
-    ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
     updateBattleUI();
+
 }
 
 
@@ -170,7 +226,7 @@ void MainWindow::on_pushButton_skill1_clicked()
     }
     else
     {
-        damage = 18;
+        damage = 25;
         ui->textEdit_log->append("冯宝宝使用了 菜刀斩！");
     }
 
@@ -212,3 +268,99 @@ bool MainWindow::checkGameOver()
 
     return false;
 }
+
+void MainWindow::on_pushButton_skill2_clicked()
+{
+    if(isPlayerZhang){
+        //张楚岚：阳五雷
+        int damage =30;
+        ui->textEdit_log->append("张楚岚使用了阳五雷");
+         enemyHp-=damage;
+        if(enemyHp<0)enemyHp=0;
+        ui->textEdit_log->append("敌人受到了"+QString::number(damage)+"点伤害");
+    }// 冯宝宝：回血
+    else{
+        int heal =20;
+        ui->textEdit_log->append("冯宝宝使用了回血！");
+            playerHp+=heal;
+         if(playerHp>100){
+                playerHp=100;
+             ui->textEdit_log->append("你恢复了"+QString::number(heal)+"点生命值");
+        }
+
+         updateBattleUI();
+
+         if (checkGameOver())
+             return;
+
+         enemyAttack();
+
+         checkGameOver();
+
+
+    }
+}
+
+
+void MainWindow::on_pushButton_skill3_clicked()
+{
+    if (isPlayerZhang)
+    {
+        // 张楚岚：迅雷，15~30随机伤害
+        int damage = QRandomGenerator::global()->bounded(15, 31);
+        ui->textEdit_log->append("张楚岚使用了 迅雷！");
+        enemyHp -= damage;
+
+        if (enemyHp < 0)
+            enemyHp = 0;
+
+        ui->textEdit_log->append("敌人受到了 " + QString::number(damage) + " 点伤害！");
+    }
+    else
+    {
+        // 冯宝宝：认真一刀
+        int damage = 38;
+        ui->textEdit_log->append("冯宝宝使用了 认真一刀！");
+        enemyHp -= damage;
+
+        if (enemyHp < 0)
+            enemyHp = 0;
+
+        ui->textEdit_log->append("敌人受到了 " + QString::number(damage) + " 点伤害！");
+    }
+
+    updateBattleUI();
+
+    if (checkGameOver())
+        return;
+
+    enemyAttack();
+
+    checkGameOver();
+}
+
+void MainWindow::on_pushButton_back_clicked()
+{
+    ui->label->setText("一人之下 对战小游戏");
+    // 显示主菜单按钮
+    ui->pushButton->show();      // 开始游戏
+    ui->pushButton_2->show();    // 退出游戏
+
+    // 隐藏角色选择按钮
+    ui->pushButton_3->hide();    // 张楚岚
+    ui->pushButton_4->hide();    // 冯宝宝
+
+    // 隐藏战斗界面
+    ui->label_player->hide();
+    ui->label_enemy->hide();
+    ui->progressBar_player->hide();
+    ui->progressBar_enemy->hide();
+    ui->textEdit_log->hide();
+    ui->pushButton_skill1->hide();
+    ui->pushButton_skill2->hide();
+    ui->pushButton_skill3->hide();
+    ui->pushButton_back->hide();
+    //清空战斗日志
+    ui->textEdit_log->clear();
+}
+
