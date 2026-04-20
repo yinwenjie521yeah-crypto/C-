@@ -36,10 +36,14 @@ private slots:
 
     void on_pushButton_back_clicked();
 
+    void on_pushButton_help_clicked();
+
 private:
     Ui::MainWindow *ui;
     int playerHp;
     int enemyHp;
+    int playerMaxHp;
+    int enemyMaxHp;
     bool isPlayerZhang;
 
     void updateBattleUI();
