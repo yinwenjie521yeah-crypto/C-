@@ -89,6 +89,9 @@ void MainWindow::on_pushButton_3_clicked()
     playerHp=playerMaxHp;
     enemyHp=enemyMaxHp;
     updateBattleUI();
+    skill2Cooldown=0;
+    skill3Cooldown=0;
+    updateSkillButtons();
 
 }
 
@@ -135,6 +138,9 @@ void MainWindow::on_pushButton_4_clicked()
     playerHp = playerMaxHp;
     enemyHp = enemyMaxHp;
     updateBattleUI();
+    skill2Cooldown=0;
+    skill3Cooldown=0;
+    updateSkillButtons();
 }
 
 
@@ -150,6 +156,22 @@ void MainWindow::on_pushButton_4_clicked()
 }
 void MainWindow::on_pushButton_5_clicked()
 {
+}
+void MainWindow::updateSkillButtons(){
+    if(skill2Cooldown>0){
+        ui->pushButton_skill2->setEnabled(false);
+    }
+    else{
+        ui->pushButton_skill2->setEnabled(true);
+    }
+    if (skill3Cooldown > 0)
+    {
+        ui->pushButton_skill3->setEnabled(false);
+    }
+    else
+    {
+        ui->pushButton_skill3->setEnabled(true);
+    }
 }
 void MainWindow::enemyAttack()
 {
@@ -256,7 +278,13 @@ void MainWindow::on_pushButton_skill1_clicked()
         return;
 
     enemyAttack();
-
+    if(skill2Cooldown>0){
+        skill2Cooldown--;
+    }
+    if(skill3Cooldown>0){
+        skill3Cooldown--;
+    }
+    updateSkillButtons();
     checkGameOver();
 }
 bool MainWindow::checkGameOver()
@@ -302,12 +330,18 @@ void MainWindow::on_pushButton_skill2_clicked()
                 playerHp=playerMaxHp;
              ui->textEdit_log->append("你恢复了"+QString::number(heal)+"点生命值");
          }}
-
-         updateBattleUI();
-
+        skill2Cooldown=2;
+        updateBattleUI();
+        updateSkillButtons();
          if (checkGameOver())
              return;
+         if (skill2Cooldown > 0)
+             skill2Cooldown--;
 
+         if (skill3Cooldown > 0)
+             skill3Cooldown--;
+
+         updateSkillButtons();
          enemyAttack();
 
          checkGameOver();
@@ -322,7 +356,7 @@ void MainWindow::on_pushButton_skill3_clicked()
     if (isPlayerZhang)
     {
         // 张楚岚：迅雷随机伤害
-        int damage = QRandomGenerator::global()->bounded(12, 22);
+        int damage = QRandomGenerator::global()->bounded(12, 23);
         ui->textEdit_log->append("张楚岚使用了 迅雷！");
         enemyHp -= damage;
 
@@ -344,15 +378,27 @@ void MainWindow::on_pushButton_skill3_clicked()
         ui->textEdit_log->append("敌人受到了 " + QString::number(damage) + " 点伤害！");
     }
 
+    skill3Cooldown = 2;
+
+
     updateBattleUI();
+    updateSkillButtons();
 
     if (checkGameOver())
         return;
 
     enemyAttack();
 
-    checkGameOver();
-}
+    if (skill2Cooldown > 0)
+    skill2Cooldown--;
+
+    if (skill3Cooldown > 0)
+    skill3Cooldown--;
+
+    updateSkillButtons();
+
+    checkGameOver();}
+
 
 void MainWindow::on_pushButton_back_clicked()
 {

@@ -45,7 +45,10 @@ private:
     int playerMaxHp;
     int enemyMaxHp;
     bool isPlayerZhang;
-
+    //增加可玩性，所以加入技能冷却
+    int skill2Cooldown;
+    int skill3Cooldown;
+    void updateSkillButtons();
     void updateBattleUI();
     void enemyAttack();
 
