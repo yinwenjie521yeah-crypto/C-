@@ -174,9 +174,19 @@ void MainWindow::updateSkillButtons(){
     }
 }
 void MainWindow::enemyAttack()
-{
-    int skill=QRandomGenerator::global()->bounded(1,4);
+{ int skill;
     if(isPlayerZhang){//玩家是张楚岚，对手是冯宝宝
+        if(enemyHp<=enemyMaxHp/2){//冯宝宝血量低则先回血
+            int chance=QRandomGenerator::global()->bounded(100);
+            if(chance<70){
+                skill=2;
+            }
+            else{
+                skill=QRandomGenerator::global()->bounded(1,4);
+            }
+        }
+        else{
+            int skill=QRandomGenerator::global()->bounded(1,4);}
         if(skill==1){
             int damage=15;
             ui->textEdit_log->append("冯宝宝使用了菜刀斩");
@@ -208,10 +218,14 @@ void MainWindow::enemyAttack()
 
             ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
         }
-    }
-    else
-    {
+        }
+    else{
         // 玩家是冯宝宝，敌人就是张楚岚
+        if(playerHp<=25){
+            skill=2;
+        }
+        else{
+            skill=QRandomGenerator::global()->bounded(1,4);}
         if (skill == 1)
         {
             int damage = 16;
@@ -245,7 +259,7 @@ void MainWindow::enemyAttack()
 
             ui->textEdit_log->append("你受到了 " + QString::number(damage) + " 点伤害！");
         }
-    }
+        }
 
     updateBattleUI();
 
@@ -378,7 +392,7 @@ void MainWindow::on_pushButton_skill3_clicked()
         ui->textEdit_log->append("敌人受到了 " + QString::number(damage) + " 点伤害！");
     }
 
-    skill3Cooldown = 2;
+    skill3Cooldown = 3;
 
 
     updateBattleUI();
