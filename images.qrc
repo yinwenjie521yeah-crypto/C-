@@ -1,0 +1,6 @@
+﻿<RCC>
+	<qresource prefix="/images">
+		<file alias="zhangchulan.png">image/zhangchulan.png</file>
+		<file alias="fengbaobao.png">image/fengbaobao.png</file>
+	</qresource>
+</RCC>

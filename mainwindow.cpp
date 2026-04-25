@@ -2,7 +2,9 @@
 #include "./ui_mainwindow.h"
 #include <QMessageBox>
 #include <QRandomGenerator>
-
+#include <QTimer>
+#include<QPropertyAnimation>
+#include <QPixmap>
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -21,6 +23,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->pushButton_skill3->hide();
     ui->pushButton_back->hide();
     ui->textEdit_help->hide();
+    ui->label_playerImage->hide();
+    ui->label_enemyImage->hide();
+
 }
 
 MainWindow::~MainWindow()
@@ -79,10 +84,18 @@ void MainWindow::on_pushButton_3_clicked()
     ui->pushButton_skill1->setText("掌心雷");
     ui->pushButton_skill2->setText("阳五雷");
     ui->pushButton_skill3->setText("迅雷");
+    ui->label_playerImage->setPixmap(QPixmap(":/images/zhangchulan.png"));
+    ui->label_enemyImage->setPixmap(QPixmap(":/images/fengbaobao.png"));
 
+    ui->label_playerImage->setScaledContents(true);
+    ui->label_enemyImage->setScaledContents(true);
+
+    ui->label_playerImage->show();
+    ui->label_enemyImage->show();
     ui->textEdit_log->clear();
     ui->textEdit_log->append("张楚岚出战！");
     ui->textEdit_log->append("对手是冯宝宝！");
+
     isPlayerZhang = true;
     playerMaxHp = 128;
     enemyMaxHp = 140;
@@ -127,7 +140,14 @@ void MainWindow::on_pushButton_4_clicked()
     ui->pushButton_skill1->setText("菜刀斩");
     ui->pushButton_skill2->setText("回血");
     ui->pushButton_skill3->setText("认真一刀");
+    ui->label_playerImage->setPixmap(QPixmap(":/images/fengbaobao.png"));
+    ui->label_enemyImage->setPixmap(QPixmap(":/images/zhangchulan.png"));
 
+    ui->label_playerImage->setScaledContents(true);
+    ui->label_enemyImage->setScaledContents(true);
+
+    ui->label_playerImage->show();
+    ui->label_enemyImage->show();
     ui->textEdit_log->clear();
     ui->textEdit_log->append("冯宝宝出战！");
     ui->textEdit_log->append("对手是张楚岚！");
@@ -154,6 +174,15 @@ void MainWindow::on_pushButton_4_clicked()
     ui->progressBar_player->setFormat("%v/%m");
     ui->progressBar_enemy->setFormat("%v/%m");
 }
+
+    void MainWindow::animateProgressBar(QProgressBar *bar, int startValue, int endValue)
+{
+    QPropertyAnimation *animation = new QPropertyAnimation(bar, "value");
+    animation->setDuration(400);   // 动画时长，单位毫秒
+    animation->setStartValue(startValue);
+    animation->setEndValue(endValue);
+    animation->start(QAbstractAnimation::DeleteWhenStopped);
+}
 void MainWindow::on_pushButton_5_clicked()
 {
 }
@@ -173,8 +202,39 @@ void MainWindow::updateSkillButtons(){
         ui->pushButton_skill3->setEnabled(true);
     }
 }
+void MainWindow::startEnemyResponse()
+{
+    // 敌人行动前，先禁用按钮，防止连点
+    ui->pushButton_skill1->setEnabled(false);
+    ui->pushButton_skill2->setEnabled(false);
+    ui->pushButton_skill3->setEnabled(false);
+    ui->pushButton_back->setEnabled(false);
+
+    ui->textEdit_log->append("敌人准备行动……");
+
+    QTimer::singleShot(700, this, [this]()
+                       {
+                           enemyAttack();
+
+                           if (skill2Cooldown > 0)
+                               skill2Cooldown--;
+
+                           if (skill3Cooldown > 0)
+                               skill3Cooldown--;
+
+                           ui->pushButton_back->setEnabled(true);
+
+                           if (!checkGameOver())
+                           {
+                               ui->pushButton_skill1->setEnabled(true);
+                               updateSkillButtons();
+                           }
+                       });
+}
 void MainWindow::enemyAttack()
-{ int skill;
+{   int skill;
+    int oldPlayerHp = playerHp;
+    int oldEnemyHp = enemyHp;
     if(isPlayerZhang){//玩家是张楚岚，对手是冯宝宝
         if(enemyHp<=enemyMaxHp/2){//冯宝宝血量低则先回血
             int chance=QRandomGenerator::global()->bounded(100);
@@ -261,7 +321,17 @@ void MainWindow::enemyAttack()
         }
         }
 
-    updateBattleUI();
+        ui->progressBar_player->setRange(0, playerMaxHp);
+        ui->progressBar_enemy->setRange(0, enemyMaxHp);
+
+        ui->progressBar_player->setFormat("%v/%m");
+        ui->progressBar_enemy->setFormat("%v/%m");
+
+        if (oldPlayerHp != playerHp)
+            animateProgressBar(ui->progressBar_player, oldPlayerHp, playerHp);
+
+        if (oldEnemyHp != enemyHp)
+            animateProgressBar(ui->progressBar_enemy, oldEnemyHp, enemyHp);
 
 }
 
@@ -269,6 +339,7 @@ void MainWindow::enemyAttack()
 void MainWindow::on_pushButton_skill1_clicked()
 {
     int damage;
+    int oldEnemyHp=enemyHp;
 
     if (isPlayerZhang)
     {
@@ -287,19 +358,13 @@ void MainWindow::on_pushButton_skill1_clicked()
         enemyHp = 0;
 
     ui->textEdit_log->append("敌人受到了 " + QString::number(damage) + " 点伤害！");
-    updateBattleUI();
+    ui->progressBar_enemy->setRange(0,enemyMaxHp);
+    ui->progressBar_enemy->setFormat("%v/%m");
+    animateProgressBar(ui->progressBar_enemy,oldEnemyHp,enemyHp);
     if (checkGameOver())
         return;
 
-    enemyAttack();
-    if(skill2Cooldown>0){
-        skill2Cooldown--;
-    }
-    if(skill3Cooldown>0){
-        skill3Cooldown--;
-    }
-    updateSkillButtons();
-    checkGameOver();
+    startEnemyResponse();
 }
 bool MainWindow::checkGameOver()
 {
@@ -327,7 +392,8 @@ bool MainWindow::checkGameOver()
 }
 
 void MainWindow::on_pushButton_skill2_clicked()
-{
+{   int oldEnemyHp = enemyHp;
+    int oldPlayerHp=playerHp;
     if(isPlayerZhang){
         //张楚岚：阳五雷
         int damage =25;
@@ -345,28 +411,30 @@ void MainWindow::on_pushButton_skill2_clicked()
              ui->textEdit_log->append("你恢复了"+QString::number(heal)+"点生命值");
          }}
         skill2Cooldown=2;
-        updateBattleUI();
-        updateSkillButtons();
-         if (checkGameOver())
-             return;
-         if (skill2Cooldown > 0)
-             skill2Cooldown--;
+    ui->progressBar_player->setRange(0, playerMaxHp);
+    ui->progressBar_enemy->setRange(0, enemyMaxHp);
+    ui->progressBar_player->setFormat("%v/%m");
+    ui->progressBar_enemy->setFormat("%v/%m");
 
-         if (skill3Cooldown > 0)
-             skill3Cooldown--;
+    if (oldPlayerHp != playerHp)
+        animateProgressBar(ui->progressBar_player, oldPlayerHp, playerHp);
 
-         updateSkillButtons();
-         enemyAttack();
+    if (oldEnemyHp != enemyHp)
+        animateProgressBar(ui->progressBar_enemy, oldEnemyHp, enemyHp);
 
-         checkGameOver();
+    updateSkillButtons();
 
+    if (checkGameOver())
+        return;
 
-    }
-
+    startEnemyResponse();
+}
 
 
 void MainWindow::on_pushButton_skill3_clicked()
 {
+    int oldPlayerHp=playerHp;
+    int oldEnemyHp=enemyHp;
     if (isPlayerZhang)
     {
         // 张楚岚：迅雷随机伤害
@@ -395,23 +463,23 @@ void MainWindow::on_pushButton_skill3_clicked()
     skill3Cooldown = 3;
 
 
-    updateBattleUI();
+    ui->progressBar_player->setRange(0, playerMaxHp);
+    ui->progressBar_enemy->setRange(0, enemyMaxHp);
+    ui->progressBar_player->setFormat("%v/%m");
+    ui->progressBar_enemy->setFormat("%v/%m");
+
+    if (oldPlayerHp != playerHp)
+        animateProgressBar(ui->progressBar_player, oldPlayerHp, playerHp);
+
+    if (oldEnemyHp != enemyHp)
+        animateProgressBar(ui->progressBar_enemy, oldEnemyHp, enemyHp);
+
     updateSkillButtons();
 
     if (checkGameOver())
         return;
 
-    enemyAttack();
-
-    if (skill2Cooldown > 0)
-    skill2Cooldown--;
-
-    if (skill3Cooldown > 0)
-    skill3Cooldown--;
-
-    updateSkillButtons();
-
-    checkGameOver();}
+    startEnemyResponse();}
 
 
 void MainWindow::on_pushButton_back_clicked()
@@ -439,6 +507,8 @@ void MainWindow::on_pushButton_back_clicked()
     ui->textEdit_help->hide();
     //清空战斗日志
     ui->textEdit_log->clear();
+    ui->label_playerImage->hide();
+    ui->label_enemyImage->hide();
 }
 
 

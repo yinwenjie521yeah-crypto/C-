@@ -2,6 +2,7 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+class QProgressBar;
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -53,5 +54,8 @@ private:
     void enemyAttack();
 
     bool checkGameOver();
+    void startEnemyResponse();
+    void animateProgressBar(QProgressBar *bar, int startValue, int endValue);
+
 };
 #endif // MAINWINDOW_H
